@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confluence — Net profit, from every stream</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:            #0F1719;
+    --bg-raise:      #16211F;
+    --surface:       #182422;
+    --surface-hi:    #1E2C29;
+    --line:          #263433;
+    --text:          #F1EDE4;
+    --text-muted:    #8FA19C;
+    --text-faint:    #5C6D69;
+    --gold:          #D4A853;
+    --gold-dim:      #8A7443;
+    --teal:          #4FBDAA;
+    --coral:         #E2735A;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 22px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212,168,83,0.09), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(79,189,170,0.07), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  ::selection{ background:var(--gold); color:#161616; }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 28px 100px; }
+
+  /* ---------- Header ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:30px 0 26px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:44px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(160deg, var(--gold), var(--teal));
+    position:relative; flex-shrink:0;
+  }
+  .brand-mark::after{
+    content:""; position:absolute; inset:9px;
+    border-radius:5px; background:var(--bg-raise);
+  }
+  .brand-name{
+    font-family:'Fraunces',serif; font-weight:600; font-size:20px; letter-spacing:-0.01em;
+  }
+  .period-toggle{
+    display:flex; background:var(--surface); border:1px solid var(--line);
+    border-radius:999px; padding:4px;
+  }
+  .period-toggle button{
+    border:none; background:transparent; color:var(--text-muted);
+    font-family:'Inter'; font-size:13px; font-weight:600;
+    padding:8px 18px; border-radius:999px; cursor:pointer;
+    transition:all .18s ease;
+  }
+  .period-toggle button.active{ background:var(--gold); color:#181008; }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    display:grid; grid-template-columns:1.15fr 0.85fr; gap:48px;
+    align-items:center; margin-bottom:56px;
+  }
+  .hero-eyebrow{
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--teal); font-weight:600; margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:'Fraunces',serif; font-weight:600; font-size:34px; line-height:1.15;
+    margin:0 0 18px; letter-spacing:-0.01em;
+    max-width:480px;
+  }
+  .hero p.sub{
+    color:var(--text-muted); font-size:15px; line-height:1.6; max-width:440px; margin:0 0 30px;
+  }
+  .net-figure{ margin-bottom:6px; }
+  .net-label{ font-size:13px; color:var(--text-faint); font-weight:500; margin-bottom:6px; }
+  .net-amount{
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:52px;
+    letter-spacing:-0.02em; color:var(--text); line-height:1;
+  }
+  .net-amount .cents{ font-size:28px; color:var(--text-faint); }
+  .net-delta{
+    display:inline-flex; align-items:center; gap:6px; margin-top:12px;
+    font-size:13px; font-weight:600; color:var(--teal);
+    background:rgba(79,189,170,0.1); padding:5px 12px; border-radius:999px;
+  }
+  .net-delta.negative{ color:var(--coral); background:rgba(226,115,90,0.1); }
+
+  /* signature confluence graphic */
+  .confluence{ width:100%; height:auto; }
+  .confluence text{ font-family:'Inter'; }
+
+  /* ---------- Source cards ---------- */
+  .section-label{
+    font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--text-faint); font-weight:600; margin:0 0 16px;
+  }
+  .sources-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:52px;
+  }
+  .source-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-md);
+    padding:20px 20px 18px;
+  }
+  .source-top{ display:flex; align-items:center; gap:9px; margin-bottom:16px; }
+  .source-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .source-name{ font-size:13px; font-weight:600; color:var(--text-muted); }
+  .source-amount{
+    font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600; color:var(--text);
+    margin-bottom:10px;
+  }
+  .source-bar-track{ height:5px; background:var(--line); border-radius:3px; overflow:hidden; }
+  .source-bar-fill{ height:100%; border-radius:3px; transition:width .4s ease; }
+
+  /* ---------- Two column: form + table ---------- */
+  .board{ display:grid; grid-template-columns:340px 1fr; gap:24px; align-items:start; }
+
+  .panel{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:24px;
+  }
+  .panel h2{
+    font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin:0 0 20px;
+  }
+  .type-switch{
+    display:flex; gap:8px; margin-bottom:18px;
+  }
+  .type-switch button{
+    flex:1; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--line);
+    background:var(--bg-raise); color:var(--text-muted); font-family:'Inter'; font-weight:600;
+    font-size:13px; cursor:pointer; transition:all .15s ease;
+  }
+  .type-switch button.active[data-type="income"]{ background:rgba(79,189,170,0.14); border-color:var(--teal); color:var(--teal); }
+  .type-switch button.active[data-type="expense"]{ background:rgba(226,115,90,0.14); border-color:var(--coral); color:var(--coral); }
+
+  .field{ margin-bottom:14px; }
+  .field label{
+    display:block; font-size:12px; font-weight:600; color:var(--text-faint);
+    margin-bottom:6px; letter-spacing:.02em;
+  }
+  .field select, .field input{
+    width:100%; background:var(--bg-raise); border:1px solid var(--line); color:var(--text);
+    padding:11px 12px; border-radius:var(--radius-sm); font-family:'Inter'; font-size:14px;
+    outline:none; transition:border-color .15s ease;
+  }
+  .field select:focus, .field input:focus{ border-color:var(--gold); }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .add-btn{
+    width:100%; padding:13px; border:none; border-radius:var(--radius-sm);
+    background:var(--gold); color:#191006; font-family:'Inter'; font-weight:700; font-size:14px;
+    cursor:pointer; margin-top:6px; transition:filter .15s ease;
+  }
+  .add-btn:hover{ filter:brightness(1.08); }
+  .add-btn:focus-visible, .type-switch button:focus-visible, .period-toggle button:focus-visible{
+    outline:2px solid var(--gold); outline-offset:2px;
+  }
+  .form-error{
+    font-size:12px; color:var(--coral); margin-top:-6px; margin-bottom:12px; display:none;
+  }
+  .form-error.show{ display:block; }
+
+  /* ---------- Table ---------- */
+  .table-panel{ padding:0; overflow:hidden; }
+  .table-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:24px 24px 16px;
+  }
+  .table-head h2{ margin:0; }
+  .filter-select{
+    background:var(--bg-raise); border:1px solid var(--line); color:var(--text-muted);
+    padding:8px 12px; border-radius:var(--radius-sm); font-family:'Inter'; font-size:13px;
+  }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text-faint); font-weight:600; padding:10px 24px; border-top:1px solid var(--line);
+  }
+  tbody td{
+    padding:14px 24px; font-size:13.5px; border-top:1px solid var(--line); vertical-align:middle;
+  }
+  tbody tr:hover{ background:var(--surface-hi); }
+  .row-source{ display:flex; align-items:center; gap:8px; }
+  .row-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .row-amount{ font-family:'IBM Plex Mono',monospace; font-weight:600; text-align:right; }
+  .row-amount.income{ color:var(--teal); }
+  .row-amount.expense{ color:var(--coral); }
+  .row-date{ color:var(--text-faint); font-family:'IBM Plex Mono',monospace; font-size:12.5px; }
+  .row-note{ color:var(--text-muted); }
+  .del-btn{
+    background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:16px;
+    padding:4px 8px; border-radius:6px; line-height:1;
+  }
+  .del-btn:hover{ color:var(--coral); background:rgba(226,115,90,0.1); }
+
+  .empty-state{
+    padding:56px 24px 60px; text-align:center; color:var(--text-faint);
+  }
+  .empty-state .glyph{ font-size:28px; margin-bottom:10px; opacity:.5; }
+  .empty-state p{ font-size:13.5px; margin:0; max-width:280px; margin:0 auto; line-height:1.6; }
+
+  .disclaimer{
+    text-align:center; color:var(--text-faint); font-size:12px; margin-top:40px; line-height:1.7;
+  }
+
+  /* auth gate */
+  #authScreen, #lockedScreen{
+    max-width:400px; margin:100px auto; text-align:center; padding:0 20px;
+  }
+  #authScreen .brand-mark, #lockedScreen .brand-mark{
+    width:44px; height:44px; border-radius:12px; margin:0 auto 22px;
+    background:linear-gradient(160deg, var(--gold), var(--teal)); position:relative;
+  }
+  #authScreen .brand-mark::after, #lockedScreen .brand-mark::after{ content:""; position:absolute; inset:11px; border-radius:6px; background:var(--bg-raise); }
+  #authScreen h2, #lockedScreen h2{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; margin:0 0 10px; }
+  #authScreen p, #lockedScreen p{ color:var(--text-muted); font-size:14px; line-height:1.6; margin:0 0 26px; }
+  #authScreen input{
+    width:100%; background:var(--bg-raise); border:1px solid var(--line); color:var(--text);
+    padding:13px 14px; border-radius:var(--radius-sm); font-family:'Inter'; font-size:14px;
+    outline:none; margin-bottom:12px; text-align:center;
+  }
+  #authScreen input:focus{ border-color:var(--gold); }
+  #authMessage{ font-size:13px; color:var(--teal); margin-top:14px; display:none; }
+  #authError{ font-size:12.5px; color:var(--coral); margin-top:10px; display:none; }
+  #signOutBtn{
+    background:none; border:1px solid var(--line); color:var(--text-faint);
+    padding:7px 14px; border-radius:999px; font-size:12.5px; cursor:pointer;
+  }
+  #signOutBtn:hover{ border-color:var(--coral); color:var(--coral); }
+  #appRoot{ display:none; }
+
+  .pricing-panel{
+    display:grid; grid-template-columns:1.3fr 0.9fr; gap:32px; align-items:center;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:36px 40px;
+  }
+  .pricing-eyebrow{
+    font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold);
+    font-weight:600; margin-bottom:12px;
+  }
+  .pricing-panel h3{
+    font-family:'Fraunces',serif; font-weight:600; font-size:22px; line-height:1.3;
+    margin:0 0 18px; max-width:360px;
+  }
+  .pricing-features{ list-style:none; margin:0; padding:0; }
+  .pricing-features li{
+    font-size:13.5px; color:var(--text-muted); padding:8px 0 8px 22px; position:relative;
+    border-top:1px solid var(--line);
+  }
+  .pricing-features li:first-child{ border-top:none; }
+  .pricing-features li::before{
+    content:"✓"; position:absolute; left:0; color:var(--teal); font-weight:700;
+  }
+  .pricing-right{
+    text-align:center; background:var(--bg-raise); border:1px solid var(--line);
+    border-radius:var(--radius-md); padding:28px 24px;
+  }
+  .price-tag{ margin-bottom:8px; }
+  .price-amount{ font-family:'IBM Plex Mono',monospace; font-size:40px; font-weight:600; color:var(--text); }
+  .price-period{ font-size:14px; color:var(--text-faint); font-weight:500; }
+  .price-note{ font-size:12px; color:var(--text-faint); margin-bottom:18px; }
+
+  @media (max-width: 880px){
+    .hero{ grid-template-columns:1fr; }
+    .sources-grid{ grid-template-columns:repeat(2,1fr); }
+    .board{ grid-template-columns:1fr; }
+    .field-row{ grid-template-columns:1fr; }
+    .pricing-panel{ grid-template-columns:1fr; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <div class="brand-mark"></div>
+  <h2>Welcome to Confluence</h2>
+  <p>Enter your email and we'll send you a sign-in link — no password needed.</p>
+  <input type="email" id="authEmail" placeholder="you@yourbusiness.com">
+  <button class="add-btn" id="authSendBtn" type="button">Send sign-in link</button>
+  <div id="authMessage">Check your inbox — click the link to sign in.</div>
+  <div id="authError">Something went wrong. Please try again.</div>
+</div>
+
+<div id="lockedScreen" style="display:none;">
+  <div class="brand-mark"></div>
+  <h2>No active subscription</h2>
+  <p>This email isn't linked to an active Confluence subscription yet. Start your 7-day free trial to get access.</p>
+  <button class="add-btn" type="button" onclick="window.open('https://confluence-app.lemonsqueezy.com/checkout/buy/38e264fd-7128-40e6-b719-b5f29e224630', '_blank')">Start free trial</button>
+  <button id="lockedSignOutBtn" type="button" style="margin-top:14px; background:none; border:1px solid var(--line); color:var(--text-faint); padding:10px; border-radius:var(--radius-sm); width:100%; cursor:pointer;">Sign out</button>
+</div>
+
+<div id="appRoot">
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-name">Confluence</div>
+    </div>
+    <div class="period-toggle" role="group" aria-label="Time period">
+      <button data-period="month" class="active">This month</button>
+      <button data-period="year">This year</button>
+    </div>
+    <button id="signOutBtn" type="button" style="margin-left:12px;">Sign out</button>
+  </div>
+
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow">All your income, one number</div>
+      <h1>See what you actually kept — not just what came in.</h1>
+      <p class="sub">Every platform tells you the money that landed. Confluence tells you what's left after everything you spent to earn it.</p>
+      <div class="net-label">Net profit</div>
+      <div class="net-amount" id="netAmount">$0<span class="cents">.00</span></div>
+      <div class="net-delta" id="netDelta" style="display:none;"></div>
+    </div>
+    <svg class="confluence" viewBox="0 0 420 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M0 30 C 90 30, 120 95, 230 100 C 320 103, 360 100, 420 100" stroke="#D4A853" stroke-width="3" opacity="0.85"/>
+      <path d="M0 75 C 90 75, 120 98, 230 102 C 320 104, 360 102, 420 102" stroke="#4FBDAA" stroke-width="3" opacity="0.85"/>
+      <path d="M0 120 C 90 120, 120 106, 230 104 C 320 103, 360 104, 420 104" stroke="#E2735A" stroke-width="3" opacity="0.7"/>
+      <path d="M0 165 C 90 165, 120 112, 230 106 C 320 105, 360 106, 420 106" stroke="#8FA19C" stroke-width="3" opacity="0.55"/>
+      <path d="M230 100 C 320 103, 360 100, 420 100" stroke="#D4A853" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="420" cy="102" r="5" fill="#D4A853"/>
+      <text x="8" y="24" fill="#8FA19C" font-size="11" font-weight="600">Stripe</text>
+      <text x="8" y="69" fill="#8FA19C" font-size="11" font-weight="600">Upwork</text>
+      <text x="8" y="114" fill="#8FA19C" font-size="11" font-weight="600">PayPal</text>
+      <text x="8" y="159" fill="#8FA19C" font-size="11" font-weight="600">Gumroad</text>
+      <text x="340" y="90" fill="#D4A853" font-size="11" font-weight="700">Net</text>
+    </svg>
+  </div>
+
+  <div class="section-label">Income by source</div>
+  <div class="sources-grid" id="sourcesGrid"></div>
+
+  <div class="board">
+    <div class="panel">
+      <h2>Add a transaction</h2>
+      <div class="type-switch">
+        <button type="button" data-type="income" class="active">Income</button>
+        <button type="button" data-type="expense">Expense</button>
+      </div>
+
+      <div class="field" id="sourceField">
+        <label for="sourceInput">Source</label>
+        <select id="sourceInput">
+          <option>Stripe</option>
+          <option>PayPal</option>
+          <option>Upwork</option>
+          <option>Gumroad</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field" id="categoryField" style="display:none;">
+        <label for="categoryInput">Category</label>
+        <select id="categoryInput">
+          <option>Software &amp; tools</option>
+          <option>Hosting</option>
+          <option>Contractor</option>
+          <option>Taxes</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="amountInput">Amount (USD)</label>
+          <input type="number" id="amountInput" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="field">
+          <label for="dateInput">Date</label>
+          <input type="date" id="dateInput">
+        </div>
+      </div>
+      <div class="field">
+        <label for="noteInput">Note (optional)</label>
+        <input type="text" id="noteInput" placeholder="e.g. March retainer">
+      </div>
+      <div class="form-error" id="formError">Enter an amount greater than $0.</div>
+      <button class="add-btn" id="addBtn" type="button">Add transaction</button>
+    </div>
+
+    <div class="panel table-panel">
+      <div class="table-head">
+        <h2>Transactions</h2>
+        <select class="filter-select" id="filterSelect">
+          <option value="all">All sources</option>
+          <option value="Stripe">Stripe</option>
+          <option value="PayPal">PayPal</option>
+          <option value="Upwork">Upwork</option>
+          <option value="Gumroad">Gumroad</option>
+          <option value="expense">Expenses only</option>
+        </select>
+      </div>
+      <div id="tableWrap"></div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:52px;" id="pricingLabel">Pricing</div>
+  <div class="pricing-panel" id="pricingPanel">
+    <div class="pricing-left">
+      <div class="pricing-eyebrow">One plan. Nothing to compare.</div>
+      <h3>Every source, one clear number, every month.</h3>
+      <ul class="pricing-features">
+        <li>Unlimited income sources &amp; expense categories</li>
+        <li>Automatic profit calculation, every transaction</li>
+        <li>Monthly and yearly views</li>
+        <li>Cancel anytime, no contract</li>
+      </ul>
+    </div>
+    <div class="pricing-right">
+      <div class="price-tag"><span class="price-amount">$10</span><span class="price-period">/month</span></div>
+      <div class="price-note">7-day free trial · card required at signup</div>
+      <button class="add-btn" id="trialBtn" type="button">Start free trial</button>
+    </div>
+  </div>
+
+  <p class="disclaimer">Confluence — your data is saved to your account and available whenever you sign back in.<br><a href="https://legal.llmzo.com" style="color:var(--text-faint);">Terms · Privacy · Refunds</a></p>
+
+</div>
+</div>
+
+<script>
+  const SOURCE_COLORS = { Stripe:'#D4A853', PayPal:'#4FBDAA', Upwork:'#E2735A', Gumroad:'#8FA19C', Other:'#6E8A85' };
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  // === Supabase connection ===
+  const SUPABASE_URL = "https://tsbjxdzxvqttlqamlsnq.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_dZpqHYS3TYPia9yO-wEWUg_Za9oLGOa";
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null;
+  let currentEnteredUserId = null;
+  let transactions = [];
+
+  // sample rows given to a brand-new account so the dashboard isn't empty on first login
+  const SEED_ROWS = [
+    { type:'income',  source:'Stripe',  amount:2140.00, date: shiftDate(-3),  note:'March retainer' },
+    { type:'income',  source:'Upwork',  amount:860.00,  date: shiftDate(-6),  note:'Landing page project' },
+    { type:'income',  source:'Gumroad', amount:214.50,  date: shiftDate(-9),  note:'Template pack sales' },
+    { type:'income',  source:'PayPal',  amount:340.00,  date: shiftDate(-11), note:'Consulting call' },
+    { type:'income',  source:'Stripe',  amount:1180.00, date: shiftDate(-20), note:'New client — setup fee' },
+    { type:'expense', source:'Software & tools', amount:89.00,  date: shiftDate(-4),  note:'Figma + Notion' },
+    { type:'expense', source:'Hosting', amount:24.00,   date: shiftDate(-8),  note:'Server + domain' },
+    { type:'expense', source:'Contractor', amount:400.00, date: shiftDate(-14), note:'Design help' },
+  ];
+
+  function shiftDate(daysOffset){
+    const d = new Date();
+    d.setDate(d.getDate() + daysOffset);
+    return d.toISOString().slice(0,10);
+  }
+  function fmtMoney(n){
+    const neg = n < 0;
+    const abs = Math.abs(n);
+    const parts = abs.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg? '-' : '') + '$' + parts[0] + '.' + parts[1];
+  }
+  function fmtDate(iso){
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  }
+
+  // === Auth flow ===
+  async function initAuth(){
+    const { data: { session } } = await db.auth.getSession();
+    if (session) {
+      await enterApp(session.user);
+    } else {
+      document.getElementById('authScreen').style.display = 'block';
+    }
+  }
+
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      await enterApp(session.user);
+    }
+    if (event === 'SIGNED_OUT') {
+      document.getElementById('appRoot').style.display = 'none';
+      document.getElementById('lockedScreen').style.display = 'none';
+      document.getElementById('authScreen').style.display = 'block';
+    }
+  });
+
+  async function enterApp(user){
+    if (currentEnteredUserId === user.id) return; // already entered/entering — prevents double seeding
+    currentEnteredUserId = user.id;
+    currentUser = user;
+    document.getElementById('authScreen').style.display = 'none';
+
+    const { data: sub, error: subError } = await db
+      .from('subscribers')
+      .select('status')
+      .eq('email', user.email)
+      .maybeSingle();
+
+    const isActive = !subError && sub && sub.status === 'active';
+
+    if (!isActive) {
+      document.getElementById('lockedScreen').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('appRoot').style.display = 'block';
+
+    // This user is confirmed active — never show them a "start free trial" pitch again
+    const pricingLabelEl = document.getElementById('pricingLabel');
+    const pricingPanelEl = document.getElementById('pricingPanel');
+    if (pricingLabelEl && pricingPanelEl) {
+      pricingLabelEl.textContent = "Your plan";
+      pricingPanelEl.outerHTML =
+        '<div class="pricing-panel" id="pricingPanel"><div style="text-align:center; width:100%;">' +
+        '<p style="color:var(--teal); font-weight:600; margin:0 0 8px;">Your subscription is active — $10/month.</p>' +
+        '<p style="color:var(--text-muted); font-size:13.5px; margin:0;">To cancel or update billing, use the link in your Lemon Squeezy receipt email.</p>' +
+        '</div></div>';
+    }
+
+    await loadTransactions();
+  }
+
+  document.getElementById('authSendBtn').addEventListener('click', async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const errorEl = document.getElementById('authError');
+    const msgEl = document.getElementById('authMessage');
+    errorEl.style.display = 'none';
+    if (!email) return;
+
+    const btn = document.getElementById('authSendBtn');
+    btn.textContent = 'Sending…';
+    btn.disabled = true;
+
+    const { error } = await db.auth.signInWithOtp({
+      email: email,
+      options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    });
+
+    btn.textContent = 'Send sign-in link';
+    btn.disabled = false;
+
+    if (error) {
+      errorEl.textContent = error.message || "Couldn't send the link — please try again.";
+      errorEl.style.display = 'block';
+    } else {
+      msgEl.style.display = 'block';
+    }
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', async () => {
+    await db.auth.signOut();
+  });
+
+  document.getElementById('lockedSignOutBtn').addEventListener('click', async () => {
+    await db.auth.signOut();
+  });
+
+  // === Data loading ===
+  async function loadTransactions(){
+    const { data, error } = await db
+      .from('transactions')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error('Failed to load transactions', error);
+      transactions = [];
+      render();
+      return;
+    }
+
+    if (data.length === 0) {
+      // brand-new account — seed with sample data so the dashboard has something to show
+      const seedWithUser = SEED_ROWS.map(row => ({ ...row, user_id: currentUser.id }));
+      await db.from('transactions').insert(seedWithUser);
+      const refetch = await db.from('transactions').select('*').order('date', { ascending: false });
+      transactions = (refetch.data || []).map(mapRow);
+    } else {
+      transactions = data.map(mapRow);
+    }
+    render();
+  }
+
+  function mapRow(row){
+    return { id: row.id, type: row.type, source: row.source, amount: parseFloat(row.amount), date: row.date, note: row.note };
+  }
+
+  let currentPeriod = 'month';
+  let currentType = 'income';
+  let currentFilter = 'all';
+
+  function inPeriod(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    const now = new Date();
+    if(currentPeriod === 'month'){
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }
+    return d.getFullYear() === now.getFullYear();
+  }
+
+  function render(){
+    const periodTx = transactions.filter(t => inPeriod(t.date));
+    const income = periodTx.filter(t => t.type === 'income');
+    const expenses = periodTx.filter(t => t.type === 'expense');
+    const totalIncome = income.reduce((s,t)=>s+t.amount,0);
+    const totalExpense = expenses.reduce((s,t)=>s+t.amount,0);
+    const net = totalIncome - totalExpense;
+
+    // hero
+    const netStr = fmtMoney(Math.abs(net)).split('.');
+    document.getElementById('netAmount').innerHTML =
+      (net < 0 ? '-' : '') + netStr[0].replace('-','') + '<span class="cents">.' + netStr[1] + '</span>';
+
+    const deltaEl = document.getElementById('netDelta');
+    if(totalIncome > 0){
+      const margin = Math.round((net / totalIncome) * 100);
+      deltaEl.style.display = 'inline-flex';
+      deltaEl.className = 'net-delta' + (margin < 0 ? ' negative' : '');
+      deltaEl.textContent = (margin >= 0 ? '↑ ' : '↓ ') + Math.abs(margin) + '% margin';
+    } else {
+      deltaEl.style.display = 'none';
+    }
+
+    // sources grid
+    const bySource = {};
+    ['Stripe','PayPal','Upwork','Gumroad'].forEach(s => bySource[s] = 0);
+    income.forEach(t => { bySource[t.source] = (bySource[t.source]||0) + t.amount; });
+    const maxSource = Math.max(1, ...Object.values(bySource));
+    const grid = document.getElementById('sourcesGrid');
+    grid.innerHTML = Object.entries(bySource).map(([name, amt]) => `
+      <div class="source-card">
+        <div class="source-top">
+          <span class="source-dot" style="background:${SOURCE_COLORS[name]}"></span>
+          <span class="source-name">${name}</span>
+        </div>
+        <div class="source-amount">${fmtMoney(amt)}</div>
+        <div class="source-bar-track">
+          <div class="source-bar-fill" style="width:${(amt/maxSource*100).toFixed(0)}%; background:${SOURCE_COLORS[name]}"></div>
+        </div>
+      </div>
+    `).join('');
+
+    // table
+    let rows = periodTx.slice().sort((a,b)=> new Date(b.date) - new Date(a.date));
+    if(currentFilter === 'expense'){
+      rows = rows.filter(t => t.type === 'expense');
+    } else if(currentFilter !== 'all'){
+      rows = rows.filter(t => t.source === currentFilter && t.type === 'income');
+    }
+
+    const tableWrap = document.getElementById('tableWrap');
+    if(rows.length === 0){
+      tableWrap.innerHTML = `
+        <div class="empty-state">
+          <div class="glyph">◇</div>
+          <p>No transactions in this view yet. Add one on the left, or switch the filter above.</p>
+        </div>`;
+      return;
+    }
+
+    tableWrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Source</th><th>Note</th><th>Date</th><th style="text-align:right;">Amount</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(t => `
+            <tr>
+              <td>
+                <div class="row-source">
+                  <span class="row-dot" style="background:${SOURCE_COLORS[t.source] || '#6E8A85'}"></span>
+                  ${escapeHtml(t.source)}
+                </div>
+              </td>
+              <td class="row-note">${t.note ? escapeHtml(t.note) : '—'}</td>
+              <td class="row-date">${fmtDate(t.date)}</td>
+              <td class="row-amount ${t.type}">${t.type==='expense' ? '-' : '+'}${fmtMoney(t.amount)}</td>
+              <td><button class="del-btn" data-id="${t.id}" aria-label="Delete transaction">×</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    tableWrap.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        btn.disabled = true;
+        const { error } = await db.from('transactions').delete().eq('id', id);
+        if (!error) {
+          transactions = transactions.filter(t => t.id !== id);
+          render();
+        } else {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // period toggle
+  document.querySelectorAll('.period-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.period-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPeriod = btn.dataset.period;
+      render();
+    });
+  });
+
+  // filter select
+  document.getElementById('filterSelect').addEventListener('change', (e) => {
+    currentFilter = e.target.value;
+    render();
+  });
+
+  // type switch (income/expense form)
+  document.querySelectorAll('.type-switch button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.type-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentType = btn.dataset.type;
+      document.getElementById('sourceField').style.display = currentType === 'income' ? 'block' : 'none';
+      document.getElementById('categoryField').style.display = currentType === 'expense' ? 'block' : 'none';
+    });
+  });
+
+  // add transaction
+  document.getElementById('dateInput').value = todayISO();
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    const amountInput = document.getElementById('amountInput');
+    const amount = parseFloat(amountInput.value);
+    const errorEl = document.getElementById('formError');
+
+    if(!amount || amount <= 0 || isNaN(amount)){
+      errorEl.classList.add('show');
+      amountInput.focus();
+      return;
+    }
+    errorEl.classList.remove('show');
+
+    const source = currentType === 'income'
+      ? document.getElementById('sourceInput').value
+      : document.getElementById('categoryInput').value;
+    const date = document.getElementById('dateInput').value || todayISO();
+    const note = document.getElementById('noteInput').value.trim();
+
+    const addBtn = document.getElementById('addBtn');
+    addBtn.textContent = 'Adding…';
+    addBtn.disabled = true;
+
+    const { data, error } = await db
+      .from('transactions')
+      .insert({ user_id: currentUser.id, type: currentType, source, amount, date, note })
+      .select();
+
+    addBtn.textContent = 'Add transaction';
+    addBtn.disabled = false;
+
+    if (!error && data && data[0]) {
+      transactions.push(mapRow(data[0]));
+      amountInput.value = '';
+      document.getElementById('noteInput').value = '';
+      render();
+    } else {
+      errorEl.textContent = "Couldn't save that — please try again.";
+      errorEl.classList.add('show');
+    }
+  });
+
+  document.getElementById('trialBtn').addEventListener('click', () => {
+    window.open('https://confluence-app.lemonsqueezy.com/checkout/buy/38e264fd-7128-40e6-b719-b5f29e224630', '_blank');
+  });
+
+  initAuth();
+</script>
+</body>
+</html>
