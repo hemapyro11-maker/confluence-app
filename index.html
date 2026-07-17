@@ -191,7 +191,8 @@
     background:var(--bg-raise); border:1px solid var(--line); color:var(--text-muted);
     padding:8px 12px; border-radius:var(--radius-sm); font-family:'Inter'; font-size:13px;
   }
-  table{ width:100%; border-collapse:collapse; }
+  #tableWrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table{ width:100%; min-width:560px; border-collapse:collapse; }
   thead th{
     text-align:left; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
     color:var(--text-faint); font-weight:600; padding:10px 24px; border-top:1px solid var(--line);
