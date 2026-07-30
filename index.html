@@ -455,17 +455,7 @@ table{ width:100%; min-width:560px; border-collapse:collapse; }
   let currentEnteredUserId = null;
   let transactions = [];
 
-  // sample rows given to a brand-new account so the dashboard isn't empty on first login
-  const SEED_ROWS = [
-    { type:'income',  source:'Stripe',  amount:2140.00, date: shiftDate(-3),  note:'March retainer' },
-    { type:'income',  source:'Upwork',  amount:860.00,  date: shiftDate(-6),  note:'Landing page project' },
-    { type:'income',  source:'Gumroad', amount:214.50,  date: shiftDate(-9),  note:'Template pack sales' },
-    { type:'income',  source:'PayPal',  amount:340.00,  date: shiftDate(-11), note:'Consulting call' },
-    { type:'income',  source:'Stripe',  amount:1180.00, date: shiftDate(-20), note:'New client — setup fee' },
-    { type:'expense', source:'Software & tools', amount:89.00,  date: shiftDate(-4),  note:'Figma + Notion' },
-    { type:'expense', source:'Hosting', amount:24.00,   date: shiftDate(-8),  note:'Server + domain' },
-    { type:'expense', source:'Contractor', amount:400.00, date: shiftDate(-14), note:'Design help' },
-  ];
+  const SEED_ROWS = [];
 
   function shiftDate(daysOffset){
     const d = new Date();
